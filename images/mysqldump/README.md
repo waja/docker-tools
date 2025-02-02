@@ -51,13 +51,14 @@ make mysqldump
 
 | Variable | Default | Description |
 | -------- | ------- | ----------- |
-| DB_CREDS_SECRET | mysql-backup-creds | Name of secret |
+| DB_CREDS_SECRETNAME | mysql-backup-creds | Name of secret |
 | HOUR | 3 |cron-syntax backup hour |
 | KEEP_DAYS | 31 | days of snapshots to keep |
 | LOCK_FOR_BACKUP | | true if using Percona, blank for MariaDB |
 | MINUTE | 30 | cron-syntax minutes past hour |
 | SERVERS | dbhost | servers (space-separated list) to back up |
 | SKEW_SECONDS | 15 | wait between dumps |
+| SKIP_SSL | true | adjust if SSL desired |
 | USERNAME | mysqldump | username to run as |
 | TZ | UTC | time zone |
 

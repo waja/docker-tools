@@ -1,8 +1,8 @@
-FROM alpine:3.17
-MAINTAINER Rich Braun "docker@instantlinux.net"
+FROM alpine:3.21
 ARG BUILD_DATE
 ARG VCS_REF
-LABEL org.label-schema.build-date=$BUILD_DATE \
+LABEL org.opencontainers.image.authors="Rich Braun docker@instantlinux.net" \
+    org.label-schema.build-date=$BUILD_DATE \
     org.label-schema.license=GPL-3.0 \
     org.label-schema.name=samba-dc \
     org.label-schema.vcs-ref=$VCS_REF \
@@ -24,13 +24,13 @@ ENV ADMIN_PASSWORD_SECRET=samba-admin-password \
     WINBIND_USE_DEFAULT_DOMAIN=yes \
     WORKGROUP=AD
 
-ARG SAMBA_VERSION=4.16.8-r0
+ARG SAMBA_VERSION=4.20.6-r1
 
 COPY *.conf.j2 /root/
 COPY entrypoint.sh /usr/local/bin/
 RUN apk add --update --no-cache krb5 ldb-tools samba-dc=$SAMBA_VERSION samba-winbind-clients=$SAMBA_VERSION tdb \
-      bind bind-libs bind-tools libcrypto1.1 libxml2 tzdata py3-setuptools py3-pip && \
-    pip install j2cli && \
+      bind bind-libs bind-tools libcrypto3 libxml2 tzdata py3-setuptools py3-pip && \
+    pip install jinjanator --break-system-packages && \
     apk del py3-pip && \
     chmod 0755 /usr/local/bin/entrypoint.sh
 

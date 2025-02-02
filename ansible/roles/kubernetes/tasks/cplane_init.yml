@@ -1,0 +1,19 @@
+# There is a problem with kubelet volume mounting
+#  See https://github.com/kubernetes/kubernetes/pull/71663
+#  Workaround here requires manually copying data into mounted
+#  path after installation completes
+- name: TODO remove when bug 1294 is fixed - unmount kubelet vol
+  ansible.builtin.mount:
+    fstype: ext4
+    path: /var/lib/kubelet
+    src: /dev/mapper/luks-kubelet
+    state: unmounted
+
+- name: Reset Kubernetes component
+  command: kubeadm reset --force --cri-socket {{ k8s.cri_socket }}
+  register: reset_cluster
+
+- name: Init Kubernetes cluster
+  command: kubeadm init --config /etc/kubernetes/kubeadm-config.yaml
+  register: init_cluster
+  when: reset_cluster is succeeded

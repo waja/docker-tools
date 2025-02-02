@@ -1,8 +1,7 @@
-FROM alpine:3.17
-MAINTAINER Rich Braun "docker@instantlinux.net"
+FROM alpine:3.21
 ARG BUILD_DATE
 ARG VCS_REF
-LABEL org.label-schema.build-date=$BUILD_DATE \
+LABEL org.opencontainers.image.authors="Rich Braun docker@instantlinux.net" \
     org.label-schema.license=Apache-2.0 \
     org.label-schema.name=data-sync \
     org.label-schema.vcs-ref=$VCS_REF \
@@ -16,9 +15,9 @@ ENV PEERNAME= \
     SSHKEY1=data-sync-sshkey1 \
     SSHKEY2=data-sync-sshkey2
 
-ARG UNISON_VERSION=2.53.0
-ARG OCAML_VERSION=4.14.0-r0
-ARG UNISON_SHA=9364477df4501b9c7377e2ca1a7c4b44c1f16fa7cbc12b7f5b543d08c3f0740a
+ARG UNISON_VERSION=2.53.7
+ARG OCAML_VERSION=4.14.2-r1
+ARG UNISON_SHA=a259537cef465c4806d6c1638c382620db2dd395ae42a0dd2efa3ba92712bed5
 ARG RRSYNC_SHA=b745a37909fc10087cc9c901ad7dfda8ad8b6b493097b156b68ba33db4a5a52f
 
 COPY src/ /root/src/
@@ -34,8 +33,6 @@ RUN apk add --update openssh-client openssh-server perl rsync && \
       https://github.com/bcpierce00/unison/archive/v$UNISON_VERSION.tar.gz && \
     echo "$UNISON_SHA  unison.tar.gz" | sha256sum -c && \
     tar zxf unison.tar.gz --strip-components=1 && \
-    sed -i -e 's/GLIBC_SUPPORT_INOTIFY 0/GLIBC_SUPPORT_INOTIFY 1/' \
-      src/fsmonitor/linux/inotify_stubs.c && \
     make && cp src/unison src/unison-fsmonitor /usr/bin && \
     cd .. && apk del .fetch-deps && \
     rm -fr /build /var/log/* /var/cache/apk/* && \

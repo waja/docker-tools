@@ -1,16 +1,16 @@
-ARG POSTFIX_VERSION=3.7.3-r1
+ARG POSTFIX_VERSION=3.9.1-r0
 
 FROM instantlinux/postfix:$POSTFIX_VERSION
-MAINTAINER Rich Braun "docker@instantlinux.net"
 ARG BUILD_DATE
 ARG VCS_REF
-LABEL org.label-schema.build-date=$BUILD_DATE \
+LABEL org.opencontainers.image.authors="Rich Braun docker@instantlinux.net" \
+    org.label-schema.build-date=$BUILD_DATE \
     org.label-schema.license=IPL-1.0 \
     org.label-schema.name=postfix-python \
     org.label-schema.vcs-ref=$VCS_REF \
     org.label-schema.vcs-url=https://github.com/instantlinux/docker-tools
 
-ENV BLACKLIST_USER_SECRET=mysql-blacklist-user \
+ENV BLACKLIST_USER_SECRETNAME=mysql-blacklist-user \
     CIDR_MIN_SIZE=32 \
     DB_HOST=dbhost \
     DB_NAME=blacklist \
@@ -19,10 +19,9 @@ ENV BLACKLIST_USER_SECRET=mysql-blacklist-user \
     INBOUND_RELAY="by mail.mydomain.com" \
     SPAMLIMIT=12 \
     SPAMC_HOST=spamassassin
-
-ARG GETPIP_SHA=311afebb7cdd310eb3a3a6bb6fffef53d84493db98c7cebf4008a18d3418c8be
-ARG GETPIP_URI=https://bootstrap.pypa.io/pip/3.5/get-pip.py
-ARG PYTHON_PIP_VERSION=21.1.3
+ARG GETPIP_SHA=5b9e2f9bb476ce76f84942bb7247dec8d6c0bb9dbc8c62ba2543b81fd7a4243c
+ARG GETPIP_URI=https://bootstrap.pypa.io/pip/3.7/get-pip.py
+ARG PYTHON_PIP_VERSION=24.0
 
 COPY requirements.txt /root/
 COPY src/ /usr/local/bin/
@@ -33,10 +32,10 @@ RUN apk add --no-cache --update \
     wget -q -O get-pip.py $GETPIP_URI && \
     echo "$GETPIP_SHA  get-pip.py" | sha256sum -c && \
     python3 get-pip.py --disable-pip-version-check --no-cache-dir \
-      pip==$PYTHON_PIP_VERSION && \
+      pip==$PYTHON_PIP_VERSION --break-system-packages && \
     apk add --no-cache --virtual .fetch-deps \
       gcc git freetype-dev jpeg-dev musl-dev zlib-dev && \
-    pip install -r /root/requirements.txt && \
+    pip install -r /root/requirements.txt --break-system-packages && \
     chmod -R g+rx,o+rx /usr/local/bin && \
     adduser -S -u 2026 -g "Spamassassin" -s /bin/sh spamfilter && \
     addgroup spamfilter postdrop && \

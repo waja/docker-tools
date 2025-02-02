@@ -1,5 +1,5 @@
 ## postfix-python
-[![](https://img.shields.io/docker/v/instantlinux/postfix-python?sort=date)](https://hub.docker.com/r/instantlinux/postfix-python/tags "Version badge") [![](https://img.shields.io/docker/image-size/instantlinux/postfix-python?sort=date)](https://github.com/instantlinux/docker-tools/tree/main/images/postfix-python "Image badge") ![](https://img.shields.io/badge/platform-amd64%20arm64%20arm%2Fv6%20arm%2Fv7-blue "Platform badge") [![](https://img.shields.io/badge/dockerfile-latest-blue)](https://gitlab.com/instantlinux/docker-tools/-/blob/main/images/postfix-python/Dockerfile "dockerfile")
+[![](https://img.shields.io/docker/v/instantlinux/postfix-python?sort=date)](https://hub.docker.com/r/instantlinux/postfix-python/tags "Version badge") [![](https://img.shields.io/docker/image-size/instantlinux/postfix-python?sort=date)](https://github.com/instantlinux/docker-tools/tree/main/images/postfix-python "Image badge") ![](https://img.shields.io/badge/platform-amd64%20arm64%20aarch64-blue "Platform badge") [![](https://img.shields.io/badge/dockerfile-latest-blue)](https://gitlab.com/instantlinux/docker-tools/-/blob/main/images/postfix-python/Dockerfile "dockerfile")
 
 Postfix with python support. (Python needed for blacklist utility.) This repo has complete instructions for
 [building a kubernetes cluster](https://github.com/instantlinux/docker-tools/blob/main/k8s/README.md) where you can launch with [helm](https://github.com/instantlinux/docker-tools/tree/main/images/postfix-python/helm) or [kubernetes.yaml](https://github.com/instantlinux/docker-tools/blob/main/images/postfix-python/kubernetes.yaml) using _make_ and customizing [Makefile.vars](https://github.com/instantlinux/docker-tools/blob/main/k8s/Makefile.vars) after cloning this repo:
@@ -17,7 +17,7 @@ Messages flagged with a high spam score are diverted to subdirectories under /va
 
 | Variable | Default | Description |
 | -------- | ------- | ----------- |
-| BLACKLIST_USER_SECRET | mysql-blacklist-user | MySQL cred secret name |
+| BLACKLIST_USER_SECRETNAME | mysql-blacklist-user | MySQL cred secret name |
 | CIDR_MIN_SIZE | 32 | size of netblock to blacklist |
 | DB_HOST | dbhost | database host or IP |
 | DB_NAME | blacklist | db name |

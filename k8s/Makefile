@@ -59,7 +59,7 @@
 # 2) Adding a new node
 #   export K8S_WORKER_COUNT=$newcount
 #   make node_labels
-#   NODES=$node make persistent
+#   K8S_NODES=$node make persistent
 #   NODE=$node make persistent_dirs
 #
 # Always use fqdn for NODE names.
@@ -95,9 +95,7 @@ $(STACKS)::
 .PHONY: envsubst imports install namespace_config node_labels \
 	persistent remote_volumes secrets sops untaint_master
 
-IMPORTS      = dashboard cert-manager flannel
-#IMPORTS     = metrics  TODO this is busted due to TLS errors
-#IMPORTS     = calico calico-etcd
+IMPORTS      = cert-manager flannel metrics
 INSTALL_YAML = $(basename $(wildcard install/*.yaml)) \
           $(addprefix imports/, $(IMPORTS))
 VOLUMES_YAML = $(basename $(wildcard volumes/*.yaml))
@@ -106,9 +104,8 @@ install: install/admin-user cluster_network \
 	install/local-storage storage_localdefault imports \
 	install_imports namespace_config install/gitlab-rbac \
 	install/k8s-backup install/logspout remote_volumes \
-	sops data-sync-ssh persistent secrets install/ingress-nginx
- # extend_dashboard_ttl ~/.kube/config.conf 
- # TODO install/cert-manager
+	sops data-sync-ssh persistent secrets install/ingress-nginx \
+	install/cert-manager
 
 namespace_config: install/namespace install/limits install/namespace-user \
 	secrets/regcred
@@ -121,7 +118,7 @@ node_labels:
 	./scripts/node_labels.sh
 
 data-sync-ssh:
-	if ! (kubectl get secrets | grep -q "^$@ "); then \
+	if ! (kubectl get secrets -n $(K8S_NAMESPACE) | grep -q "^$@ "); then \
 	  cd ../images/data-sync && make $@; fi
 
 ~/.kube/config.conf:
@@ -150,7 +147,7 @@ endif
 # Storage
 ##########
 persistent:
-	./scripts/persistent.sh $(NODES)
+	./scripts/persistent.sh $(K8S_NODES)
 
 persistent_dirs:
 	ssh "$(NODE)" sudo 'mkdir -p $$(echo \
@@ -221,21 +218,6 @@ cert-manager-helm: helm_install
 ##########
 imports: $(foreach file,$(IMPORTS),imports/$(file).yaml)
 install_imports: $(foreach file, $(IMPORTS), imports/$(file))
-
-# extend annoying default 15-minute timeout
-# (temporarily) disable metrics healthcheck
-# TODO: re-enable metric-client-check when metrics-server is working
-#  See https://github.com/kubernetes/dashboard/issues/2986
-.PHONY: extend_dashboard_ttl
-extend_dashboard_ttl:
-	kubectl $(ADMIN_CTX) patch deployment kubernetes-dashboard --namespace kube-system \
-	  --patch='$(shell cat install/dashboard-patch.json)'
-
-imports/dashboard.yaml: imports/dashboard-$(VERSION_DASHBOARD).yaml
-	ln -s $(notdir $<) $@
-imports/dashboard-$(VERSION_DASHBOARD).yaml:
-	mkdir -p imports
-	curl -sLo $@ https://raw.githubusercontent.com/kubernetes/dashboard/v$(VERSION_DASHBOARD)/aio/deploy/recommended.yaml
 
 imports/metrics.yaml: imports/metrics-$(VERSION_METRICS).yaml
 	ln -s $(notdir $<) $@

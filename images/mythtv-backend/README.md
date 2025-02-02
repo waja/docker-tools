@@ -1,7 +1,7 @@
 ## mythtv-backend
 [![](https://img.shields.io/docker/v/instantlinux/mythtv-backend?sort=date)](https://hub.docker.com/r/instantlinux/mythtv-backend/tags "Version badge") [![](https://img.shields.io/docker/image-size/instantlinux/mythtv-backend?sort=date)](https://github.com/instantlinux/docker-tools/tree/main/images/mythtv-backend "Image badge") ![](https://img.shields.io/badge/platform-amd64-blue "Platform badge") [![](https://img.shields.io/badge/dockerfile-latest-blue)](https://gitlab.com/instantlinux/docker-tools/-/blob/main/images/mythtv-backend/Dockerfile "dockerfile")
 
-The MythTV backend built under Ubuntu jammy (22.04).
+The MythTV backend built under Ubuntu noble (24.04).
 
 ### Usage
 
@@ -75,6 +75,17 @@ make mythfrontend-setup
 
 This ansible script is prone to configuration glitches so you will likely have to make adjustments in order to complete the process.
 
+Note that the [Kodi](https://kodi.tv/download/) frontend also provides limited support for the MythTV backend.
+ 
+### Volumes
+
+Optionally, mount these path names to persistent storage:
+
+Path | Description
+---- | -----------
+/var/log/apache2 | Apache logs
+/etc/ssh | Host keys and configs for ssh
+
 ### Secrets
 
 Add these as Kubernetes secrets, or if you're running standalone specify these with source type "file". See the above volume mounts or the sample docker-compose.yml.
@@ -87,7 +98,7 @@ mythweb-auth | htpasswd for mythweb user(s) under k8s
 
 ### Upgrade Notes
 
-Version 31:
+(This section applies only if you're running version 30, from 2020 or earlier.)
 
 You probably need to configure XMLTV in place of the old mythfilldatabase method used to fetch listings from [Schedules Direct](https://www.schedulesdirect.org/). See the documentation [Setup Video Sources](https://www.mythtv.org/wiki/Setup_Video_Sources). This image includes the required packages but does not automate setup. It's beyond scope of this document to describe the process fully but here are some of the required steps:
 

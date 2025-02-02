@@ -1,4 +1,4 @@
-FROM alpine:3.17
+FROM alpine:3.20
 MAINTAINER Rich Braun "docker@instantlinux.net"
 ARG BUILD_DATE
 ARG VCS_REF
@@ -7,9 +7,8 @@ LABEL org.label-schema.build-date=$BUILD_DATE \
     org.label-schema.name=dhcpd-dns-pxe \
     org.label-schema.vcs-ref=$VCS_REF \
     org.label-schema.vcs-url=https://github.com/instantlinux/docker-tools
-
-ARG DHCP_VERSION=4.4.3_p1-r1
-ARG DNSMASQ_VERSION=2.87-r0
+ARG DHCP_VERSION=4.4.3_p1-r4
+ARG DNSMASQ_VERSION=2.90-r3
 
 ENV DHCP_BOOT=pxelinux.0 \
     DHCP_ENABLE=yes \
@@ -35,7 +34,8 @@ ENV DHCP_BOOT=pxelinux.0 \
     TFTP_SERVER=self \
     TZ=UTC
 
-RUN apk add --no-cache --update dhcp=$DHCP_VERSION dnsmasq=$DNSMASQ_VERSION
+RUN apk add --no-cache --update dhcp=$DHCP_VERSION dnsmasq=$DNSMASQ_VERSION && \
+    mkdir -m 755 /run/dhcp && chown dhcp /run/dhcp
 
 EXPOSE 53/udp 67/udp 69/udp
 VOLUME $DHCP_LEASE_PATH $TFTP_ROOT /etc/dhcpd.d/local /etc/dnsmasq.d/local

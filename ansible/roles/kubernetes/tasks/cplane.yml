@@ -1,0 +1,98 @@
+---
+- name: Check if kubeadm has already run
+  ansible.builtin.stat:
+    path: "/etc/kubernetes/pki/ca.key"
+  register: kubeadm_ca
+
+- name: Configure kubeadm on control plane
+  ansible.builtin.template:
+    src: kubeadm-config-cplane.j2
+    dest: /etc/kubernetes/kubeadm-config.yaml
+
+# TODO: run_once is not supported with strategy: free
+- name: Init cluster if needed
+  include_tasks: cplane_init.yml
+  run_once: yes
+  when: not kubeadm_ca.stat.exists
+
+- name: Get current user
+  local_action: command whoami
+  become: false
+  changed_when: false
+  register: username
+
+- name: Generate download name for admin.conf (avoid overwrite)
+  ansible.builtin.set_fact:
+    admin_conf_dest: /home/{{ username.stdout }}/.kube/admin.{{
+      ansible_date_time.iso8601 }}
+
+- name: Fetch admin.conf
+  ansible.builtin.fetch:
+    src: "{{ k8s.admin_config }}"
+    dest: "{{ admin_conf_dest }}"
+    flat: yes
+    mode: 0400
+  when: not kubeadm_ca.stat.exists or k8s.config_fetch_always
+
+# TODO - sed s/kubernetes/{{hostname -s}}/g
+
+- name: Symlink .kube/admin.conf
+  local_action:
+    module: file
+    src:  "{{ admin_conf_dest }}"
+    dest: /home/{{ username.stdout }}/.kube/admin.conf
+    state: link
+  when: not kubeadm_ca.stat.exists or k8s.config_fetch_always
+
+- name: Symlink .kube/config
+  local_action:
+    module: file
+    src:  "{{ admin_conf_dest }}"
+    dest: /home/{{ username.stdout }}/.kube/config
+    state: link
+  when: not kubeadm_ca.stat.exists or k8s.config_fetch_always
+
+- name: Create kubelet service override directory
+  ansible.builtin.file:
+    dest: /etc/systemd/system/kubelet.service.d
+    state: directory
+
+- name: Enable CPU/memory accounting in kubelet
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/kubelet.service.d/11-cgroups.conf
+    content: |
+      [Service]
+      CPUAccounting=true
+      MemoryAccounting=true
+
+- name: Set up encryption config in path available to kube-apiserver
+  ansible.builtin.template:
+    src: secrets.conf.j2
+    dest: /etc/kubernetes/pki/secrets.conf
+    mode: 0600
+
+- name: Adjust kube-apiserver config - encrypt etcd values
+  ansible.builtin.lineinfile:
+    path: /etc/kubernetes/manifests/kube-apiserver.yaml
+    insertafter: etcd-servers=https://127.0.0.1:2379
+    line: '    - --encryption-provider-config=/etc/kubernetes/pki/secrets.conf'
+
+- name: Create / restrict directory for etcd backups
+  ansible.builtin.file:
+    dest: /var/backup/k8s
+    group: nagios
+    mode: 0750
+    state: directory
+
+- name: Cron package - needed for cleaning old backups
+  ansible.builtin.apt:
+    name: cron
+
+- name: Backup-pruning crontab
+  ansible.builtin.cron:
+    name: k8s-backup-retention
+    job: find /var/backup/k8s -mtime +25 -delete
+    hour: 3
+    minute: 0
+    user: root
+    weekday: 1

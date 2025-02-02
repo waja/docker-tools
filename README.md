@@ -17,7 +17,8 @@ easy. Contents:
 | ssl | PKI certificate tools (deprecated by k8s) |
 | stacks | container resources in docker-compose format |
 
-Find images at [docker hub/instantlinux](https://hub.docker.com/r/instantlinux/).
+Find images at [docker hub/instantlinux](https://hub.docker.com/r/instantlinux/). Each image is scanned by [trivy](https://trivy.dev/) to ensure they contain no known CVE vulnerabilities before promotion to Docker Hub.
+
 Find a lot more details about the Kubernetes bare-metal installer in [k8s/README](k8s/README.md).
 
 ### Kubernetes capabilities
@@ -29,6 +30,7 @@ The cluster-deployment tools here include helm charts and ansible playbooks to s
 * Non-default namespace with its own service account (full permissions
   within namespace, limited read-only in kube-system namespaces)
 * Keycloak for OpenID / OAuth2 user authentication / authorization
+* Vaultwarden, a self-hosted Bitwarden-compatible password manager
 * Helm3
 * Mozilla [sops](https://github.com/mozilla/sops/blob/master/README.rst) with encryption (to keep credentials in local git repo)
 * Encryption for internal etcd
@@ -47,7 +49,7 @@ The cluster-deployment tools here include helm charts and ansible playbooks to s
 | Service | Version | Notes |
 | --- | --- | --- |
 | artifactory | ** | binary repo |
-| gitlab | ** | CI server and git repo |
+| gitea | ** | git repo |
 | admin-git | [![](https://img.shields.io/docker/v/instantlinux/git-pull?sort=date)](https://hub.docker.com/r/instantlinux/git-pull "Version badge") | sync git repo across swarm |
 | jira | ** | ticket tracking |
 | mariadb-galera | [![](https://img.shields.io/docker/v/instantlinux/mariadb-galera?sort=date)](https://hub.docker.com/r/instantlinux/mariadb-galera "Version badge") | automatic cluster setup|
@@ -105,6 +107,7 @@ The cluster-deployment tools here include helm charts and ansible playbooks to s
 
 Thank you to the following contributors!
 
+* [Mike Neir](https://github.com/d0ct0rvenkman)
 * [Chad Hedstrom](https://github.com/Hadlock) - [personal site](http://nearlydeaf.com/)
 * [Sean Mollet](https://github.com/SeanMollet)
 * [Juan Manuel Carrillo Moreno](https://github.com/inetshell) - [personal site](https://wiki.inetshell.mx/)

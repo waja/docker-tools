@@ -43,14 +43,16 @@ These variables can be passed to the image from kubernetes.yaml or docker-compos
 
 | Variable | Default | Description |
 | -------- | ------- | ----------- |
-| API_TOKEN_SECRET | | docker secret name of API token as below |
+| API_TOKEN_SECRETNAME | | docker secret name of API token as below |
 | DEST_DIR | /var/backup/git | destination path |
 | HOUR | 0 |cron-syntax backup hour |
 | KEEP_DAYS | 31 | days of snapshots to keep |
 | MINUTE | 45 | cron-syntax minutes past hour |
+| ORG | | org in SCM |
 | REPO_PREFIX | git@github.com:instantlinux/ | prefix for each repository URI |
 | REPOS | | repository URIs to back up |
-| SSHKEY_SECRET | git-dump_sshkey | docker secret name as below |
+| SCM_TYPE | github | type - github, gitlab, or gitea |
+| SSHKEY_SECRETNAME | git-dump_sshkey | docker secret name as below |
 | SSH_PORT | 22 | TCP port of git service |
 | TZ | UTC | time zone |
 

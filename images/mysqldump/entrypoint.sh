@@ -8,7 +8,8 @@ fi
 CNF=/home/$USERNAME/.my.cnf
 LOG=/var/log/mysqldump.log
 echo [client] > $CNF
-cat /run/secrets/$DB_CREDS_SECRET >> $CNF
+cat /run/secrets/$DB_CREDS_SECRETNAME >> $CNF
+[ $SKIP_SSL = true ] && echo "skip-ssl=true" >> $CNF
 
 touch $LOG
 chown $USERNAME /var/backup $LOG $CNF

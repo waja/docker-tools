@@ -1,4 +1,4 @@
-FROM alpine:3.16
+FROM alpine:3.20
 MAINTAINER Rich Braun "docker@instantlinux.net"
 ARG BUILD_DATE
 ARG VCS_REF
@@ -43,46 +43,44 @@ ENV AIRLINK_HOST= \
     TZ_CODE=10 \
     WEBCAM_URL=https://www.wunderground.com/wundermap?lat=37.761&lon=-122.435&zoom=5&radar=1&cam=1 \
     WEEK_START=6 \
-    WX_USER=weewx \
-    XTIDE_LOCATION=unset
+    WX_ROOT=/home/weewx/weewx-data \
+    WX_USER=weewx
 
-ARG WEEWX_VERSION=4.9.1
-ARG WEEWX_SHA=a5b4f8410b15ee4827f53272acb6daa91fb605c558f6ae1c9c5541aebdae14c7
+ARG WEEWX_VERSION=5.1.0
 ARG WEEGREEN_VERSION=v0.12
+ARG AIRLINK_VERSION=1.4
 ARG WX_GROUP=dialout
 ARG WX_UID=2071
-ARG XTIDE_SHA=e5c4afbb17269fdde296e853f2cb84845ed1c1bb1932f780047ad71d623bc681
+ARG AIRLINK_SHA=6392ee1d8e96a543306f16430ec9095b79dd7d0aacf8078171aa61b060a49745
 
-COPY install-input.txt requirements.txt /root/
+COPY install-input.txt entrypoint.sh log.conf /tmp
 RUN apk add --no-cache --update \
       curl freetype libjpeg libstdc++ openssh openssl python3 py3-cheetah \
-      py3-configobj py3-mysqlclient py3-pillow py3-requests py3-six py3-usb \
-      rsync rsyslog tzdata && \
+      py3-configobj py3-mysqlclient py3-pillow py3-pymysql py3-pyserial \
+      py3-requests py3-six py3-usb rsync rsyslog tzdata && \
     adduser -u $WX_UID -s /bin/sh -G $WX_GROUP -D $WX_USER && \
-    mkdir build && cd build && \
-    curl -sLo weewx.tar.gz \
-      http://www.weewx.com/downloads/released_versions/weewx-$WEEWX_VERSION.tar.gz && \
-    echo "$WEEWX_SHA  weewx.tar.gz" >> /build/checksums && \
-    sha256sum -c /build/checksums && \
-    apk add --no-cache --virtual .fetch-deps \
-      file freetype-dev g++ gawk gcc git jpeg-dev libpng-dev make musl-dev \
-      py3-pip py3-wheel python3-dev zlib-dev && \
-    pip install -r /root/requirements.txt && \
-    ln -s python3 /usr/bin/python && \
-    tar xf weewx.tar.gz --strip-components=1 && \
-    cd /build && \
-    ./setup.py build && ./setup.py install < /root/install-input.txt && \
+    mv /tmp/* /home/$WX_USER && \
+    apk add --no-cache --virtual .fetch-deps gcc git musl-dev python3-dev && \
+    VENV=/home/$WX_USER/weewx-venv && \
+    python3 -m venv $VENV --system-site-packages && \
+    source $VENV/bin/activate && \
+    python3 -m pip install weewx==$WEEWX_VERSION && \
     git clone -b $WEEGREEN_VERSION --depth 1 \
       https://github.com/instantlinux/weewx-WeeGreen.git \
-      /home/$WX_USER/skins/WeeGreen && \
+      $WX_ROOT/skins/WeeGreen && \
+    chown $WX_USER $WX_ROOT && \
+    chown -R $WX_USER $WX_ROOT/skins && \
+    su $WX_USER -c \
+      "$VENV/bin/weectl station create < /home/$WX_USER/install-input.txt" && \
+    cat /home/$WX_USER/log.conf >> $WX_ROOT/weewx.conf && \
     curl -sLo /tmp/weewx-airlink.zip \
-      https://github.com/chaunceygardiner/weewx-airlink/archive/master.zip && \
-    /home/$WX_USER/bin/wee_extension --install /tmp/weewx-airlink.zip && \
+      https://github.com/chaunceygardiner/weewx-airlink/releases/download/v$AIRLINK_VERSION/weewx-airlink-$AIRLINK_VERSION.zip && \
+    echo "$AIRLINK_SHA  /tmp/weewx-airlink.zip" >> /tmp/checksums && \
+      sha256sum -c /tmp/checksums && \
+    su $WX_USER -c \
+      "$VENV/bin/weectl extension install /tmp/weewx-airlink.zip --yes" && \
     apk del .fetch-deps && \
-    rm -fr /build /home/$WX_USER/weewx.conf.2* /home/$WX_USER/docs \
-      /home/$WX_USER/skins/WeeGreen/.git \
-      /root/.cache /var/cache/apk/* /var/log/* /tmp/* && \
-    find /home/$WX_USER/bin -name '*.pyc' -exec rm '{}' +;
+    rm -fr $WX_ROOT/skins/WeeGreen/.git /home/$WX_USER/.cache && \
+    find /usr/lib/python3* $VENV -name __pycache__ -exec rm -r '{}' +;
 
-COPY entrypoint.sh /usr/local/bin
-ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+ENTRYPOINT ["/home/weewx/entrypoint.sh"]

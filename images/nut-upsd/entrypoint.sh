@@ -1,7 +1,9 @@
 #! /bin/sh -e
 
-if [ -d /run/secrets ] && [ -s /run/secrets/$SECRET ]; then
-  API_PASSWORD=$(cat /run/secrets/$SECRET)
+cat /etc/passwd
+
+if [ -d /run/secrets ] && [ -s /run/secrets/$SECRETNAME ]; then
+  API_PASSWORD=$(cat /run/secrets/$SECRETNAME)
 fi
 
 if [ ! -e /etc/nut/.setup ]; then
@@ -29,6 +31,9 @@ EOF
     if [ ! -z "$SDORDER" ]; then
       echo "        sdorder = $SDORDER" >> /etc/nut/ups.conf
     fi
+  fi
+  if [ "$MAXAGE" -ne 15 ]; then
+      sed -i -e "s/^[# ]*MAXAGE [0-9]\+/MAXAGE $MAXAGE/" /etc/nut/upsd.conf
   fi
   if [ -e /etc/nut/local/upsd.conf ]; then
     cp /etc/nut/local/upsd.conf /etc/nut/upsd.conf
@@ -60,10 +65,10 @@ fi
 chgrp $GROUP /etc/nut/*
 chmod 640 /etc/nut/*
 mkdir -p -m 2750 /dev/shm/nut
-chown $USER.$GROUP /dev/shm/nut
+chown $USER:$GROUP /dev/shm/nut
 [ -e /var/run/nut ] || ln -s /dev/shm/nut /var/run
 # Issue #15 - change pid warning message from "No such file" to "Ignoring"
-echo 0 > /var/run/nut/upsd.pid && chown $USER.$GROUP /var/run/nut/upsd.pid
+echo 0 > /var/run/nut/upsd.pid && chown $USER:$GROUP /var/run/nut/upsd.pid
 echo 0 > /var/run/upsmon.pid
 
 /usr/sbin/upsdrvctl -u root start
